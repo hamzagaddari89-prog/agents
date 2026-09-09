@@ -67,7 +67,7 @@ None.
 
     # 3. temporary MCP definition (no credentials)
     Set-Content (Join-Path $root 'mcp\servers\zzz-itest.md') -Value @'
-# zzz-itest ط·آ£ط¢آ¢ط£آ¢أ¢â‚¬ع‘ط¢آ¬ط£آ¢أ¢â€ڑآ¬أ¢â‚¬إ’ MCP server definition
+# zzz-itest ط·آ·ط¢آ£ط·آ¢ط¢آ¢ط·آ£ط¢آ¢ط£آ¢أ¢â€ڑآ¬ط¹â€کط·آ¢ط¢آ¬ط·آ£ط¢آ¢ط£آ¢أ¢â‚¬ع‘ط¢آ¬ط£آ¢أ¢â€ڑآ¬ط¥â€™ MCP server definition
 
 - **name:** zzz-itest
 - **purpose:** integration test definition (not real)
@@ -97,6 +97,7 @@ finally {
     $pr = [IO.File]::ReadAllText($prPath, [Text.UTF8Encoding]::new($false))
     $pr = $pr -replace '(?s)\r?\n## Candidate: zzz-itest.*?(?=\r?\n## Candidate: |$)', ''
     $pr = $pr.TrimEnd() + "`n"
+    [IO.File]::WriteAllText($prPath, $pr, [Text.UTF8Encoding]::new($false))
     foreach ($s in 'sync-rules.ps1','sync-agents.ps1','sync-adapters.ps1') {
         powershell -NoProfile -File (Join-Path $root $s) | Out-Null
     }
