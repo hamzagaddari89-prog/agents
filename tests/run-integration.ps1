@@ -20,9 +20,9 @@ try {
     # 1. temporary rule
     Set-Content (Join-Path $root 'rules\zzz-itest.md') -Value "# Zzz Integration Test`n`nTemporary rule for integration testing.`n"
     powershell -NoProfile -File (Join-Path $root 'sync-rules.ps1') | Out-Null
-    T 'temp rule appears in Claude block' ((Select-String -LiteralPath "$home_\.claude\CLAUDE.md" -SimpleMatch '## Zzz Integration Test' -Quiet))
-    T 'temp rule appears in Codex block' ((Select-String -LiteralPath "$home_\.codex\AGENTS.md" -SimpleMatch '## Zzz Integration Test' -Quiet))
-    T 'temp rule appears in Qwen block' ((Select-String -LiteralPath "$home_\.qwen\QWEN.md" -SimpleMatch '## Zzz Integration Test' -Quiet))
+    T 'temp rule appears in Claude block' ((Select-String -LiteralPath "$home_\.claude\CLAUDE.md" -SimpleMatch '## zzz-itest' -Quiet))
+    T 'temp rule appears in Codex block' ((Select-String -LiteralPath "$home_\.codex\AGENTS.md" -SimpleMatch '## zzz-itest' -Quiet))
+    T 'temp rule appears in Qwen block' ((Select-String -LiteralPath "$home_\.qwen\QWEN.md" -SimpleMatch '## zzz-itest' -Quiet))
 
     # 2. temporary agent definition
     Set-Content (Join-Path $root 'agents\zzz-itester.md') -Value @"
