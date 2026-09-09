@@ -1,4 +1,4 @@
-# Testing Rules
+﻿# Testing Rules
 
 - "Verified" means actually run: state the command and the observed result.
   "Looks fine" is not verification.

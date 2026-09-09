@@ -1,4 +1,4 @@
-# Security Rules
+﻿# Security Rules
 
 - Never store or echo secrets (API keys, tokens, passwords) in skills, rules,
   memory files, checkpoints, or logs.

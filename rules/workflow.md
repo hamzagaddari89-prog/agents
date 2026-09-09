@@ -1,4 +1,4 @@
-# Workflow Rules
+﻿# Workflow Rules
 
 - Use the shared skills in `~\.agents\skills` when they apply. Standard loop:
   `continue -> plan -> implement -> test -> verify -> review -> checkpoint`.

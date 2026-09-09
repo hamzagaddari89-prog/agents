@@ -1,4 +1,4 @@
-# Coding Rules
+﻿# Coding Rules
 
 Shared, agent-agnostic coding conventions. Every agent on this machine is
 expected to follow these when writing or modifying code.

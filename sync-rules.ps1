@@ -43,6 +43,9 @@ function Build-Block {
 }
 
 function Sync-RulesFile([string]$path, [switch]$PointerFile) {
+    # Ensure the target directory exists (needed for sandboxes).
+    $parent = Split-Path $path -Parent
+    if (-not (Test-Path $parent)) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
     $block = Build-Block
     $existing = if (Test-Path $path) { Get-Content $path -Raw } else { $null }
 
