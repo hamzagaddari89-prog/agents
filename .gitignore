@@ -1,2 +1,14 @@
+# Backups are not part of the shared layer
 .backup-*
+# Runtime caches and transient files
+__pycache__/
+*.pyc
+*.pyo
+*.log
+.tmp/
+*.tmp
+# OS noise
+Thumbs.db
+.DS_Store
+
 
