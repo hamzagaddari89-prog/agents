@@ -93,9 +93,10 @@ finally {
     Write-Host "`n== D-cleanup =="
     # remove temp artifacts and re-sync
     Remove-Item (Join-Path $root 'rules\zzz-itest.md'), (Join-Path $root 'agents\zzz-itester.md'), (Join-Path $root 'mcp\servers\zzz-itest.md') -Force -ErrorAction SilentlyContinue
-    $pr = Get-Content (Join-Path $root '.promote.md') -Raw
+    $prPath = Join-Path $root '.promote.md'
+    $pr = [IO.File]::ReadAllText($prPath, [Text.UTF8Encoding]::new($true))
     $pr = $pr -replace '(?s)\r?\n## Candidate: zzz-itest.*?(?=\r?\n## Candidate: |$)', ''
-    [IO.File]::WriteAllText((Join-Path $root '.promote.md'), $pr)
+    [IO.File]::WriteAllText($prPath, $pr, [Text.UTF8Encoding]::new($true))
     foreach ($s in 'sync-rules.ps1','sync-agents.ps1','sync-adapters.ps1') {
         powershell -NoProfile -File (Join-Path $root $s) | Out-Null
     }
