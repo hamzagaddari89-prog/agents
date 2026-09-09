@@ -67,7 +67,7 @@ None.
 
     # 3. temporary MCP definition (no credentials)
     Set-Content (Join-Path $root 'mcp\servers\zzz-itest.md') -Value @'
-# zzz-itest ط·آ·ط¢آ£ط·آ¢ط¢آ¢ط·آ£ط¢آ¢ط£آ¢أ¢â€ڑآ¬ط¹â€کط·آ¢ط¢آ¬ط·آ£ط¢آ¢ط£آ¢أ¢â‚¬ع‘ط¢آ¬ط£آ¢أ¢â€ڑآ¬ط¥â€™ MCP server definition
+# zzz-itest ط·آ·ط¢آ·ط·آ¢ط¢آ£ط·آ·ط¢آ¢ط·آ¢ط¢آ¢ط·آ·ط¢آ£ط·آ¢ط¢آ¢ط·آ£ط¢آ¢ط£آ¢أ¢â‚¬ع‘ط¢آ¬ط·آ¹أ¢â‚¬ع©ط·آ·ط¢آ¢ط·آ¢ط¢آ¬ط·آ·ط¢آ£ط·آ¢ط¢آ¢ط·آ£ط¢آ¢ط£آ¢أ¢â€ڑآ¬ط¹â€کط·آ¢ط¢آ¬ط·آ£ط¢آ¢ط£آ¢أ¢â‚¬ع‘ط¢آ¬ط·آ¥أ¢â‚¬â„¢ MCP server definition
 
 - **name:** zzz-itest
 - **purpose:** integration test definition (not real)
@@ -96,7 +96,7 @@ finally {
     $prPath = Join-Path $root '.promote.md'
     $pr = [IO.File]::ReadAllText($prPath, [Text.UTF8Encoding]::new($false))
     $pr = $pr -replace '(?s)\r?\n## Candidate: zzz-itest.*?(?=\r?\n## Candidate: |$)', ''
-    $pr = $pr.TrimEnd() + "`n"
+    $pr = ($pr -replace "(?<!`r)`n", "`r`n").TrimEnd() + "`r`n"
     [IO.File]::WriteAllText($prPath, $pr, [Text.UTF8Encoding]::new($false))
     foreach ($s in 'sync-rules.ps1','sync-agents.ps1','sync-adapters.ps1') {
         powershell -NoProfile -File (Join-Path $root $s) | Out-Null
@@ -109,7 +109,7 @@ T 'temp agent removed from Claude' (-not (Test-Path "$home_\.claude\agents\zzz-i
 T 'temp agent removed from OpenCode' (-not (Test-Path "$home_\.config\opencode\agent\zzz-itester.md"))
 T 'temp MCP definition removed' (-not (Test-Path (Join-Path $root 'mcp\servers\zzz-itest.md')))
 T 'promotion log restored' (-not ((Get-Content (Join-Path $root '.promote.md') -Raw).Contains('zzz-itest')))
-$after = @(git -C $root status --porcelain)
+$null = git -C $root update-index --refresh 2>$null; $after = @(git -C $root status --porcelain)
 T "no unrelated changes (git clean before=$($before.Count), after=$($after.Count))" ($after.Count -eq 0 -and $before.Count -eq 0)
 
 Write-Host ''
