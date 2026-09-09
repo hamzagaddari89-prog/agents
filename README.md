@@ -1,109 +1,150 @@
-# Shared Agent Skills Layer
+# Shared Agent Infrastructure
 
-Single source of truth for coding-agent skills, shared by every agent on this
-machine. **The skills are the foundation; the agents are just consumers.**
+Single source of truth for coding-agent **skills, rules, agent roles, and MCP
+definitions**, shared by every agent on this machine. Local, simple, portable,
+auditable, safe. The content is the foundation; the agents are just consumers.
 
 ```
-~\.agents\skills\              <- SOURCE OF TRUTH (Agent Skills standard: <name>\SKILL.md)
-      |
-      +-- Cline        reads ~\.agents\skills natively
-      +-- OpenCode     ~\.config\opencode\skills   = junction -> ~\.agents\skills
-      +-- Claude Code  ~\.claude\skills            = junction -> ~\.agents\skills
-      +-- Codex        ~\.codex\skills\<name>      = per-skill junctions (leaves .system intact)
-      +-- Qwen Code    ~\.qwen\QWEN.md             = pointer artifact (generated)
+~\.agents\                        <- THIS DIRECTORY = source of truth (local git repo, no remote)
+  skills\          <name>\SKILL.md   Agent Skills standard
+  rules\           *.md              machine-level conventions
+  agents\          *.md              canonical sub-agent role definitions
+  mcp\             README.md, servers\*.md   MCP definitions (docs only, never enabled by default)
+  .promote.md                        friction / learning promotion log (human-controlled)
+  sync-adapters.ps1  sync-rules.ps1  sync-agents.ps1   idempotent generators
+  verify.ps1         doctor.ps1      verification + diagnostics
+  tests\           run-tests.ps1, run-integration.ps1
 ```
+
+## Consumers (adapters)
+
+| Agent | Skills | Rules | Agents | MCP |
+|---|---|---|---|---|
+| Cline        | reads `~\.agents\skills` natively | via Cline config | n/a | own config |
+| OpenCode     | junction `~\.config\opencode\skills` | generated block in `~\.config\opencode\AGENTS.md` | generated subagent files | own config |
+| Claude Code  | junction `~\.claude\skills` | generated block in `~\.claude\CLAUDE.md` | generated `~\.claude\agents\*.md` | own config |
+| Codex        | per-skill junctions (leaves `.system` intact) | generated block in `~\.codex\AGENTS.md` | inline (no native sub-agents) | own config |
+| Qwen Code    | generated pointer in `~\.qwen\QWEN.md` | generated block in same file | inline | n/a |
+| (others)     | no safe native mechanism -> skipped | | | |
 
 ## Skills
 
-Workflow skills: `continue`, `plan`, `implement`, `test`, `verify`,
-`checkpoint`, `review`, `cold-review`, `audit`, `research`,
-`context-management`, `task-delegation`.
-Pre-existing (kept as-is): `se-workflow`, `project-status`, `self-repair`,
-`research-methodology`, `ponytail*`, `ai-priming`, `developing-with-streamlit`.
+12 workflow skills: `continue, plan, implement, test, verify, checkpoint,
+review, cold-review, audit, research, context-management, task-delegation`.
+Plus pre-existing skills kept as-is (`se-workflow`, `pony*`, `ai-priming`, ...).
 
-## How to add a skill
+Add a skill: `mkdir ~\.agents\skills\<kebab-name>`, create `SKILL.md` with
+`name:` and a trigger-rich `description:` in frontmatter. Run the sync scripts;
+Cline/OpenCode/Claude pick it up through junctions automatically.
 
-1. `mkdir ~\.agents\skills\<skill-name>` and create `SKILL.md` inside.
-2. Frontmatter must have `name:` and `description:` (the description is what
-   makes agents discover and trigger the skill — write it carefully, include
-   trigger words). Body: the instructions, model-agnostic, no tool-only syntax.
-3. If the skill is Codex-relevant too: re-run the sync script (below).
-   Cline/OpenCode/Claude pick it up automatically through the junctions.
-4. Keep one skill per directory; name it `kebab-case`; avoid duplicating an
-   existing skill's purpose (check before adding).
+## Rules
 
-## How to add a new agent (adapter)
+Plain markdown files in `~\.agents\rules` (currently: coding, testing,
+security, workflow). Rules are agent-agnostic. `sync-rules.ps1` injects them
+into agent instruction files inside clearly marked generated blocks:
 
-Check what the agent natively supports, in this order:
+```
+<!-- shared-agents:rules:START ... -->
+<!-- shared-agents:rules:END -->
+```
 
-1. **Reads `~\.agents\skills` directly** (like Cline) -> nothing to do.
-2. **Has a user skills dir** (OpenCode `~\.config\opencode\skills`, Claude
-   `~\.claude\skills`, Codex `~\.codex\skills`) -> create a junction to the
-   shared dir (or per-skill junctions if the dir also holds its own skills,
-   as Codex does with `.system`). Example:
-   `New-Item -ItemType Junction -Path <agent-skills-dir> -Target ~\.agents\skills`
-3. **Only has a global instructions/context file** (Qwen `~\.qwen\QWEN.md`) ->
-   add a short pointer listing the skills and the project-memory convention.
-   Mark it as a generated artifact.
-4. **No customization mechanism** (Copilot CLI, cagent) -> no adapter; skip.
+- Never edits user content outside the block; appends if no block exists.
+- Idempotent: running twice changes nothing.
+- Malformed rule files (no heading / secret-looking content) abort the sync.
 
-Never copy skill files into an agent's dir as the source of truth — copies
-are generated/synced artifacts only.
+## Agents (sub-agent roles)
+
+`agents\*.md` are canonical role definitions (purpose, responsibilities,
+allowed/forbidden behavior, read-only flag, output expectations).
+`sync-agents.ps1` adapts them ONLY to runtimes with native sub-agents
+(Claude Code, OpenCode). Runtimes without native support use the definitions
+as inline prompts; nothing is faked. Hand-placed agent files (e.g. the original
+cold-reviewer) are never overwritten; generated files carry a
+`GENERATED by ~\.agents\sync-agents.ps1` marker and stale generated files are
+removed on sync. One delegation level maximum.
+
+## MCP definitions
+
+`mcp\servers\*.md` document MCP servers (see `mcp\README.md` and the
+`TEMPLATE.md`). **Nothing is auto-enabled, installed, or started.** No
+credentials ever — environment-variable references only. Enabling an MCP
+server is a manual step in the specific agent's own config.
+
+## Promotion workflow (`.promote.md`)
+
+When a session hits recurring friction, append a Candidate
+(date, project, problem, observation, proposed improvement, destination,
+status). When friction recurs, promote it into an actual rule/skill/agent/doc
+and set `Status: promoted`. Rejected candidates stay visible. **Human-controlled
+only** — no tooling reads or applies this file automatically.
+
+## Git versioning
+
+`~\.agents` is a local git repository (no remote, nothing pushed). It provides
+history, rollback, diff, and auditability. `.gitignore` excludes backups,
+runtime caches, and transient files. Never commit secrets.
 
 ## Project memory convention (used by the skills)
 
-Per project, the skills maintain:
+Per project: `.agent/CHECKPOINT.md` (current resume state) and
+`.agent/DECISIONS.md` (append-only decisions incl. rejected alternatives).
 
-- `.agent\CHECKPOINT.md` — current resume state (overwritten each checkpoint):
-  Completed / Changed / Verified / Decisions / Known Issues / Next Step.
-- `.agent\DECISIONS.md` — append-only decision log (decision, rationale,
-  rejected alternatives).
-
-Agents with native memory tools (OpenCode `memory_*`, `create_checkpoint`)
-may use them in addition; the `.agent/` convention is the portable baseline.
-
-## Sub-agents (only where natively supported)
-
-- Claude Code: `~\.claude\agents\cold-reviewer.md`
-- OpenCode: `~\.config\opencode\agent\cold-reviewer.md` (mode: subagent)
-
-Purpose: independent "cold review" of a change without inheriting the
-implementer's reasoning. Other agents: run the `review`/`cold-review` skills
-inline instead of imitating sub-agents.
-
-## Sync / regenerate artifacts
-
-Codex per-skill junctions and the Qwen pointer are generated. Regenerate them
-after adding/removing skills with:
+## Commands
 
 ```powershell
-powershell -File ~\.agents\sync-adapters.ps1
+powershell -File ~\.agents\sync-adapters.ps1   # skills adapters (junctions, Qwen pointer)
+powershell -File ~\.agents\sync-rules.ps1      # rules blocks into instruction files
+powershell -File ~\.agents\sync-agents.ps1     # agent definitions -> native sub-agent runtimes
+powershell -File ~\.agents\verify.ps1          # fast layer health check
+powershell -File ~\.agents\doctor.ps1          # full diagnostics (incl. sandbox idempotency)
+powershell -File ~\.agents\tests\run-tests.ps1          # unit + cross-agent + regression
+powershell -File ~\.agents\tests\run-integration.ps1    # end-to-end with cleanup
 ```
 
-Idempotent: safe to run any time; it only creates missing junctions/pointers,
-removes stale ones, and never touches agent-owned content (e.g. Codex `.system`).
+All sync scripts are idempotent and accept `-TargetHome <path>` to run against
+a sandbox (used by tests/doctor; never touches real agent dirs in that mode).
 
-## Verify the layer
+## Safety model
 
-```powershell
-powershell -File ~\.agents\verify.ps1
-```
+- Junctions are the sync mechanism: the shared dir IS what agents read — no
+  copy drift, no pull step.
+- Generated content is always inside marked blocks and safely replaceable.
+- Sync scripts refuse to overwrite non-generated files (junctions or
+  hand-placed agent definitions).
+- verify.ps1 / doctor.ps1 scan for plaintext secrets (hard failure).
 
-Checks: frontmatter validity, no duplicate skill names, junction targets
-resolve, adapters intact, no secrets committed in skills.
+## Why this is NOT TeamAI
 
-## Standard workflow (proportional — not every task needs every phase)
+This layer was consciously designed against Tencent TeamAI CLI. It
+intentionally avoids TeamAI's:
 
-```
-continue (resume) -> plan -> implement -> test -> verify -> review/cold-review -> checkpoint
-```
+- **remote team repo / provider abstraction / MR workflow** — we are one user
+  on one machine; a local git repo gives history and rollback.
+- **copy-based pull sync + injected hooks** — filesystem junctions need no
+  hooks, no network, no state ledger, and cannot drift.
+- **telemetry, dashboards, digests** — team-scale observability we cannot use.
+- **learnings database, BM25 recall, knowledge graph, AST extraction** — our
+  knowledge volume is fully readable as plain markdown; search infra would be
+  pure overhead.
+- **package/env distribution and config surgery in other tools' settings** —
+  writes outside our layer with irreversible semantics.
+- **roles, namespaces, subscriptions, orchestration** — team problems we do
+  not have.
 
-Small tasks: `implement` + `test` is enough. Big tasks: the full loop.
-Read-only needs: `audit` / `research` / `review`.
+What we borrowed: a first-class Rules layer, the friction→promotion learning
+loop, git versioning of the layer itself, and doctor-style diagnostics —
+implemented as thin, dependency-free PowerShell + Markdown.
+
+## Limitations
+
+- Single machine, single user. To move machines: copy the directory (it is a
+  git repo; add a private remote if you ever want one).
+- Rules/agent exposure depends on each tool's instruction-file behavior;
+  tools without instruction files get nothing (by design — no fake support).
+- MCP definitions are documentation only; enabling is manual per agent.
 
 ## Maintenance rules
 
-- Backups live in `~\.agents\.backup-*` and are not part of the skills dir.
-- Historical note: `~\.agents\skills\skills` was a nested exact duplicate
-  (hash-identical) found in Phase 0; it was moved to
-  `.backup-nested-skills-duplicate\skills` — do not recreate it.
+- Backups live in `~\.agents\.backup-*` and are ignored by git.
+- Historical note: the nested `skills/skills` duplicate from Phase 0 lives in
+  `.backup-nested-skills-duplicate\` — do not recreate it.
