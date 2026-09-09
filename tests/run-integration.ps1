@@ -67,7 +67,7 @@ None.
 
     # 3. temporary MCP definition (no credentials)
     Set-Content (Join-Path $root 'mcp\servers\zzz-itest.md') -Value @'
-# zzz-itest â€” MCP server definition
+# zzz-itest أ¢â‚¬â€‌ MCP server definition
 
 - **name:** zzz-itest
 - **purpose:** integration test definition (not real)
@@ -94,7 +94,7 @@ finally {
     # remove temp artifacts and re-sync
     Remove-Item (Join-Path $root 'rules\zzz-itest.md'), (Join-Path $root 'agents\zzz-itester.md'), (Join-Path $root 'mcp\servers\zzz-itest.md') -Force -ErrorAction SilentlyContinue
     $prPath = Join-Path $root '.promote.md'
-    $pr = [IO.File]::ReadAllText($prPath, [Text.[Text.UTF8Encoding]::new($false))
+    $pr = [IO.File]::ReadAllText($prPath, [Text.UTF8Encoding]::new($false))
     $pr = $pr -replace '(?s)\r?\n## Candidate: zzz-itest.*?(?=\r?\n## Candidate: |$)', ''
     [IO.File]::WriteAllText($prPath, $pr, [Text.[Text.UTF8Encoding]::new($false))
     foreach ($s in 'sync-rules.ps1','sync-agents.ps1','sync-adapters.ps1') {
