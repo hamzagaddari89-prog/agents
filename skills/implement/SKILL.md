@@ -18,7 +18,9 @@ Execute a plan with minimal, verifiable changes.
    (git commit/branch, or native checkpoint tools when available).
 4. **Implement.**
    - Make the fewest changes necessary; follow existing conventions.
-   - One step at a time; each step leaves the codebase working.
+   - One step at a time; each step leaves the codebase working. When
+     test-first applies, establish the failing test before the implementation
+     change; an expected RED state (the intentionally failing test) is valid.
    - No drive-by refactors, no unrelated edits, no scope expansion.
 5. **Test.** Run the relevant tests for the affected area (see `test` skill).
    Fix only what the plan covers; report anything uncovered as a finding.

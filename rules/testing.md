@@ -3,6 +3,21 @@
 - "Verified" means actually run: state the command and the observed result.
   "Looks fine" is not verification.
 - New behavior needs a test; bug fixes need a test that fails before the fix.
+- Test-first (TDD) when a test can reasonably be established first: write or
+  establish the failing test before implementing (RED); run it and confirm it
+  fails for the intended reason, quoting that failure as evidence (a compile
+  error or typo is not the intended failure). Then make the smallest
+  implementation change, re-run the focused test until it passes (GREEN), and
+  run the broader relevant suite. Cleanup or refactoring after that must not
+  change behavior (REFACTOR). For bug fixes the debugging order stands —
+  symptom → reproduce → evidence → diagnosis → fix → re-run; the reproduction
+  is the failing state, so do not insert a test-first step before it (see the
+  `systematic-debugging` skill).
+- TDD does not apply to every kind of work: docs-only, config-only,
+  exploratory, or read-only work needs no invented tests — say why TDD does
+  not apply instead of forcing meaningless tests.
+- Tests should verify observable behavior through the appropriate entry
+  points rather than merely mirroring implementation internals.
 - Debugging is evidence-first: establish the actual symptom and reproduce the
   failure before changing code. If it cannot be reproduced, say so and work
   from collected evidence (logs, stack traces, recent diffs) instead of

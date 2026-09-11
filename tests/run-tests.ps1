@@ -148,6 +148,9 @@ $sd = Get-Content (Join-Path $root 'skills\systematic-debugging\SKILL.md') -Raw
 T 'systematic-debugging skill covers the methodology' ($sd -match 'symptom' -and $sd -match 'reproduc' -and $sd -match 'hypothes' -and $sd -match 'root cause')
 $tm = Get-Content (Join-Path $root 'rules\testing.md') -Raw
 T 'debugging gates present; V2 #1 wording intact' ($tm -match 'systematic-debugging' -and $tm -match 'Verification before completion' -and $tm -match 'Never mask a symptom')
+$tst = Get-Content (Join-Path $root 'skills\test\SKILL.md') -Raw
+T 'TDD loop in testing rules (intended failure, REFACTOR, escape hatch)' ($tm -match 'fails for the intended reason' -and $tm -match 'REFACTOR' -and $tm -match 'docs-only')
+T 'test skill documents test-first (RED) mode with intended-failure check' ($tst -match 'test-first' -and $tst -match 'fails for the intended reason')
 $snap = @(git -C $root status --porcelain)
 powershell -NoProfile -File (Join-Path $root 'sync-adapters.ps1') | Out-Null
 T 'sync-adapters.ps1 idempotent on real layer' (-not $snap -and -not @(git -C $root status --porcelain))

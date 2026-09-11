@@ -1,6 +1,6 @@
 ---
 name: test
-description: Run and add tests for changes, analyze failures, and report evidence. Identifies the affected area, runs relevant tests, analyzes failures, and reports honestly — including important cases that were never tested. Use when the user asks to test, verify tests, or after implementation. Fixing failures is allowed only when explicitly operating in implementation mode.
+description: Run and add tests for changes, analyze failures, and report evidence. Identifies the affected area, runs relevant tests, analyzes failures, and reports honestly — including important cases that were never tested. Use when the user asks to test, verify tests, before implementation to establish a failing test (test-first/RED), or after implementation. Fixing failures is allowed only when explicitly operating in implementation mode.
 ---
 
 # Test
@@ -40,6 +40,20 @@ Report evidence
    - Important cases NOT covered by any test — success of existing tests is
      not sufficient evidence when untested important behavior exists
    - Conclusion: does the evidence support the change?
+
+## Test-first (RED)
+
+When invoked before implementation for a behavior change:
+
+1. **Establish** the failing test: write it, or adopt the existing
+   reproduction as the test.
+2. **Confirm** it fails for the intended reason — quote the failure message
+   as evidence. A compile error, typo, or wrong fixture is not the intended
+   failure.
+3. **Hand off.** Stop and hand to implementation (e.g. the `implement`
+   skill). Do not implement unless explicitly in implementation mode.
+
+The rules below apply unchanged in this mode.
 
 ## Rules
 
