@@ -29,6 +29,8 @@ Report evidence
    affected). Use the project's actual runner and flags.
 3. **Analyze.** For failures: root cause, is it caused by the change, or
    pre-existing? Report pre-existing failures as findings — do not hide them.
+   For non-trivial failures, follow the `systematic-debugging` skill before
+   fixing.
 4. **Fix** only when explicitly operating in implementation mode (user said
    fix/implement). Otherwise report and stop.
 5. **Re-run** after any fix.

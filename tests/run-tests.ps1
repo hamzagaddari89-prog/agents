@@ -27,7 +27,7 @@ T 'working tree clean' (-not @(git -C $root status --porcelain))
 
 Section('A2 Skill discovery')
 $skills = Get-ChildItem (Join-Path $root 'skills') -Directory | Where-Object { Test-Path (Join-Path $_.FullName 'SKILL.md') }
-T '24 skills discovered' ($skills.Count -eq 24)
+T '25 skills discovered' ($skills.Count -eq 25)
 $skillNames = @()
 foreach ($s in $skills) {
     $md = Get-Content (Join-Path $s.FullName 'SKILL.md') -Raw
@@ -108,17 +108,17 @@ T 'all three syncs no-op on second run' $idem
 Remove-Item $sbx -Recurse -Force -ErrorAction SilentlyContinue
 
 Section('B Cross-agent visibility (real layer)')
-T 'Cline: sees 24 shared skills natively' ($skills.Count -eq 24)
+T 'Cline: sees 25 shared skills natively' ($skills.Count -eq 25)
 $ocVisible = @(Get-ChildItem "$home_\.config\opencode\skills" -Directory -ErrorAction SilentlyContinue | Where-Object { Test-Path (Join-Path $_.FullName 'SKILL.md') }).Count
-T "OpenCode: $ocVisible skills visible through junction" ($ocVisible -eq 24)
+T "OpenCode: $ocVisible skills visible through junction" ($ocVisible -eq 25)
 $ccVisible = @(Get-ChildItem "$home_\.claude\skills" -Directory -ErrorAction SilentlyContinue | Where-Object { Test-Path (Join-Path $_.FullName 'SKILL.md') }).Count
-T "Claude: $ccVisible skills visible through junction" ($ccVisible -eq 24)
+T "Claude: $ccVisible skills visible through junction" ($ccVisible -eq 25)
 $cxVisible = 0
 foreach ($s in $skills) {
     $p = "$home_\.codex\skills\$($s.Name)"
     if ((Test-Path "$p\SKILL.md") -and (Get-Item $p -Force).LinkType -eq 'Junction') { $cxVisible++ }
 }
-T "Codex: $cxVisible shared skills via per-skill junctions" ($cxVisible -eq 24)
+T "Codex: $cxVisible shared skills via per-skill junctions" ($cxVisible -eq 25)
 T 'Codex: system-owned .system intact' (Test-Path "$home_\.codex\skills\.system")
 $qw = Get-Content "$home_\.qwen\QWEN.md" -Raw
 T 'Qwen: skills pointer present' ($qw.Contains('Shared skills pointer'))
@@ -144,6 +144,10 @@ $cont = Get-Content (Join-Path $root 'skills\continue\SKILL.md') -Raw
 T 'continue skill reads project memory' ($cont.Contains('CHECKPOINT.md') -and $cont.Contains('git status'))
 $td = Get-Content (Join-Path $root 'skills\task-delegation\SKILL.md') -Raw
 T 'sub-agent policy unchanged (native-only)' ($td -match 'native sub-agents' -and $td -match 'not imitate')
+$sd = Get-Content (Join-Path $root 'skills\systematic-debugging\SKILL.md') -Raw
+T 'systematic-debugging skill covers the methodology' ($sd -match 'symptom' -and $sd -match 'reproduc' -and $sd -match 'hypothes' -and $sd -match 'root cause')
+$tm = Get-Content (Join-Path $root 'rules\testing.md') -Raw
+T 'debugging gates present; V2 #1 wording intact' ($tm -match 'systematic-debugging' -and $tm -match 'Verification before completion' -and $tm -match 'Never mask a symptom')
 $snap = @(git -C $root status --porcelain)
 powershell -NoProfile -File (Join-Path $root 'sync-adapters.ps1') | Out-Null
 T 'sync-adapters.ps1 idempotent on real layer' (-not $snap -and -not @(git -C $root status --porcelain))

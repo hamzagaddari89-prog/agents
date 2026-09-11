@@ -46,6 +46,17 @@ expected to follow these when writing or modifying code.
 - "Verified" means actually run: state the command and the observed result.
   "Looks fine" is not verification.
 - New behavior needs a test; bug fixes need a test that fails before the fix.
+- Debugging is evidence-first: establish the actual symptom and reproduce the
+  failure before changing code. If it cannot be reproduced, say so and work
+  from collected evidence (logs, stack traces, recent diffs) instead of
+  guessing. For non-trivial failures follow the `systematic-debugging` skill.
+- Fix with one change at a time and re-run the reproduction after each change;
+  do not stack a second fix on an unverified first one. Never mask a symptom
+  (deleting or weakening a failing test, swallowing the error) instead of
+  fixing the cause.
+- Distinguish confirmed root cause from hypothesis and label them as such. If
+  the root cause cannot be established, say so explicitly instead of patching
+  blindly.
 - Run the project's existing test command (or find it) before claiming done.
 - Verification before completion: a task may be reported as done only after
   verification ran in this session — state the exact command(s) and their

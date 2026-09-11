@@ -29,8 +29,9 @@ auditable, safe. The content is the foundation; the agents are just consumers.
 
 ## Skills
 
-12 workflow skills: `continue, plan, implement, test, verify, checkpoint,
-review, cold-review, audit, research, context-management, task-delegation`.
+13 workflow skills: `continue, plan, implement, test, verify, checkpoint,
+review, cold-review, audit, research, context-management, task-delegation,
+systematic-debugging`.
 Plus pre-existing skills kept as-is (`se-workflow`, `pony*`, `ai-priming`, ...).
 
 Add a skill: `mkdir ~\.agents\skills\<kebab-name>`, create `SKILL.md` with
