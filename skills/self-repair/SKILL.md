@@ -1,6 +1,7 @@
 ---
 name: self-repair
 description: Safe self-diagnostics and repair for OpenCode environment
+license: MIT
 ---
 
 # Self-Repair Skill

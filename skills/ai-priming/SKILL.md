@@ -1,6 +1,7 @@
 ---
 name: ai-priming
 description: Personal AI agent priming with persistent memory context injection
+license: MIT
 ---
 
 # AI Priming Skill
