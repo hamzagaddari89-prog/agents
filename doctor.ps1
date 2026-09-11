@@ -99,7 +99,7 @@ if (Test-Path "$home_\.qwen\QWEN.md") { Report('PASS', 'Qwen pointer artifact') 
 if ((Test-Path "$home_\.claude\CLAUDE.md") -and (Select-String -LiteralPath "$home_\.claude\CLAUDE.md" -SimpleMatch 'shared-agents:rules:START' -Quiet)) { Report('PASS', 'Claude rules block') } else { Report('FAIL', 'Claude rules block missing (run sync-rules.ps1)') }
 if ((Test-Path "$home_\.codex\AGENTS.md") -and (Select-String -LiteralPath "$home_\.codex\AGENTS.md" -SimpleMatch 'shared-agents:rules:START' -Quiet)) { Report('PASS', 'Codex rules block') } else { Report('FAIL', 'Codex rules block missing (run sync-rules.ps1)') }
 if ((Test-Path "$home_\.config\opencode\AGENTS.md") -and (Select-String -LiteralPath "$home_\.config\opencode\AGENTS.md" -SimpleMatch 'shared-agents:rules:START' -Quiet)) { Report('PASS', 'OpenCode rules block') } else { Report('FAIL', 'OpenCode rules block missing (run sync-rules.ps1)') }
-if (Select-String -LiteralPath "$home_\.qwen\QWEN.md" -SimpleMatch 'shared-agents:rules:START' -Quiet) { Report('PASS', 'Qwen rules block') } else { Report('FAIL', 'Qwen rules block missing (run sync-rules.ps1)') }
+if ((Test-Path "$home_\.qwen\QWEN.md") -and (Select-String -LiteralPath "$home_\.qwen\QWEN.md" -SimpleMatch 'shared-agents:rules:START' -Quiet)) { Report('PASS', 'Qwen rules block') } else { Report('FAIL', 'Qwen rules block missing (run sync-rules.ps1)') }
 Section('Generated-layer drift (deployed blocks vs source)')
 # Compare each deployed generated rules block against the block the current
 # source rules produce (same construction as sync-rules.ps1 Build-Block).
@@ -158,14 +158,23 @@ Section('Idempotency (sandbox: sync twice, second run must be a no-op)')
 $sbx = Join-Path ([IO.Path]::GetTempPath()) ("agents-doctor-" + [guid]::NewGuid().ToString('N').Substring(0, 8))
 New-Item -ItemType Directory -Path $sbx -Force | Out-Null
 $ops2 = ''
+$opsFail = ''
 try {
     foreach ($s in 'sync-adapters.ps1', 'sync-rules.ps1', 'sync-agents.ps1') {
+        $rc1 = 1; $rc2 = 1
         powershell -NoProfile -File (Join-Path $root $s) -TargetHome $sbx | Out-Null
+        $rc1 = $LASTEXITCODE
         $out2 = (powershell -NoProfile -File (Join-Path $root $s) -TargetHome $sbx) | Out-String
-        if ($out2 -match '^(created|written|appended|updated)\s') { $ops2 += "$s " }
+        $rc2 = $LASTEXITCODE
+        # A crashed sync must fail the check too - idempotency of a script
+        # that exits non-zero is meaningless.
+        if ($rc1 -ne 0 -or $rc2 -ne 0) { $opsFail += "$s " }
+        elseif ($out2 -match '^(created|written|appended|updated)\s') { $ops2 += "$s " }
     }
 } finally { Remove-Item $sbx -Recurse -Force -ErrorAction SilentlyContinue }
-if ($ops2) { Report('FAIL', "not idempotent: $ops2") } else { Report('PASS', 'all syncs idempotent (sandbox)') }
+if ($opsFail) { Report('FAIL', "sync failed in sandbox (non-zero exit): $opsFail") }
+if ($ops2) { Report('FAIL', "not idempotent: $ops2") }
+if (-not $opsFail -and -not $ops2) { Report('PASS', 'all syncs idempotent (sandbox)') }
 
 Write-Host ''
 if ($fail -gt 0) { Write-Host "RESULT: FAIL ($fail failure(s), $warn warning(s))"; exit 1 }
