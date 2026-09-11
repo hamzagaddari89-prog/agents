@@ -20,7 +20,7 @@ auditable, safe. The content is the foundation; the agents are just consumers.
 
 | Agent | Skills | Rules | Agents | MCP |
 |---|---|---|---|---|
-| Cline        | reads `~\.agents\skills` natively | via Cline config | n/a | own config |
+| Cline        | reads `~\.agents\skills` natively | generated block in `~\.agents\AGENTS.md` (read natively by Cline) | n/a | own config |
 | OpenCode     | junction `~\.config\opencode\skills` | generated block in `~\.config\opencode\AGENTS.md` | generated subagent files | own config |
 | Claude Code  | junction `~\.claude\skills` | generated block in `~\.claude\CLAUDE.md` | generated `~\.claude\agents\*.md` | own config |
 | Codex        | per-skill junctions (leaves `.system` intact) | generated block in `~\.codex\AGENTS.md` | inline (no native sub-agents) | own config |

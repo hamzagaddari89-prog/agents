@@ -6,6 +6,7 @@
 #   Claude Code  ~\.claude\CLAUDE.md
 #   Codex        ~\.codex\AGENTS.md
 #   OpenCode     ~\.config\opencode\AGENTS.md
+#   Cline        ~\.agents\AGENTS.md (read natively by Cline as global rules)
 #   Qwen Code    ~\.qwen\QWEN.md (generated pointer file from sync-adapters.ps1)
 #
 # -TargetHome: override the "home" root (used by tests to run in a sandbox).
@@ -80,6 +81,7 @@ $report['Claude Code CLAUDE.md']  = Sync-RulesFile (Join-Path $TargetHome '.clau
 $report['Codex AGENTS.md']        = Sync-RulesFile (Join-Path $TargetHome '.codex\AGENTS.md')
 $report['OpenCode AGENTS.md']     = Sync-RulesFile (Join-Path $TargetHome '.config\opencode\AGENTS.md')
 $report['Qwen Code QWEN.md']      = Sync-RulesFile (Join-Path $TargetHome '.qwen\QWEN.md') -PointerFile
+$report['Cline AGENTS.md']        = Sync-RulesFile (Join-Path $TargetHome '.agents\AGENTS.md')
 
 $report.GetEnumerator() | ForEach-Object { '{0,-8} {1}' -f $_.Value, $_.Key }
 Write-Host "Rules synced: $($ruleFiles.Count) -> $($ruleFiles.Name -join ', ')"
