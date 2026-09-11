@@ -2,7 +2,8 @@
 
 - Use the shared skills in `~\.agents\skills` when they apply. Standard loop:
   `continue -> plan -> implement -> test -> verify -> review -> checkpoint`.
-  Small tasks: `implement` + `test` is enough.
+  Small tasks: `implement` + `test` is enough — but the completion gate in the
+  testing rules (evidence before claiming done) always applies.
 - Project memory convention: maintain `.agent/CHECKPOINT.md` (current state)
   and `.agent/DECISIONS.md` (append-only, includes rejected alternatives).
 - Record decisions in DECISIONS.md with rationale and rejected alternatives —
