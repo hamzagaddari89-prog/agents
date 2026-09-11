@@ -114,6 +114,11 @@ job).
 - Junctions are the sync mechanism: the shared dir IS what agents read — no
   copy drift, no pull step.
 - Generated content is always inside marked blocks and safely replaceable.
+- Deployed generated content is drift-checked: run-tests.ps1 / doctor.ps1
+  compare every deployed rules block (and generated agent files) against what
+  the source currently generates. A mismatch is a hard FAIL — the remedy is
+  running sync-rules.ps1 / sync-agents.ps1.
+
 - Sync scripts refuse to overwrite non-generated files (junctions or
   hand-placed agent definitions).
 - verify.ps1 / doctor.ps1 scan for plaintext secrets (hard failure).
