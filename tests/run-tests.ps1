@@ -22,7 +22,8 @@ function New-Sandbox {
 
 Section('A1 Git')
 T 'git repo exists' (Test-Path (Join-Path $root '.git'))
-T 'no remote (local only)' (-not @(git -C $root remote))
+$remotes = @(git -C $root remote -v | ForEach-Object { ($_ -split '\s+')[1] })
+T 'no machine-local remote paths' (-not @($remotes | Where-Object { $_ -match '(?i)^([a-z]:[\\/]|file:|\\\\)' }))
 T 'working tree clean' (-not @(git -C $root status --porcelain))
 
 Section('A2 Skill discovery')

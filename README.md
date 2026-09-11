@@ -5,7 +5,7 @@ definitions**, shared by every agent on this machine. Local, simple, portable,
 auditable, safe. The content is the foundation; the agents are just consumers.
 
 ```
-~\.agents\                        <- THIS DIRECTORY = source of truth (local git repo, no remote)
+~\.agents\                        <- THIS DIRECTORY = source of truth (git versioned)
   skills\          <name>\SKILL.md   Agent Skills standard
   rules\           *.md              machine-level conventions
   agents\          *.md              canonical sub-agent role definitions
@@ -81,9 +81,9 @@ only** — no tooling reads or applies this file automatically.
 
 ## Git versioning
 
-`~\.agents` is a local git repository (no remote, nothing pushed). It provides
-history, rollback, diff, and auditability. `.gitignore` excludes backups,
-runtime caches, and transient files. Never commit secrets.
+`~\.agents` is a git repository (local-first; it works with or without a
+remote). It provides history, rollback, diff, and auditability. `.gitignore`
+excludes backups, runtime caches, and transient files. Never commit secrets.
 
 ## Project memory convention (used by the skills)
 

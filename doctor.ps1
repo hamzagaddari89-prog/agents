@@ -32,8 +32,8 @@ else {
     if ($dirty.Count) { Report('WARN', "git working tree dirty ($($dirty.Count) change(s)) - commit for auditability") }
     else { Report('PASS', 'git working tree clean') }
     $remote = @(git -C $root remote)
-    if ($remote.Count) { Report('WARN', "unexpected git remote configured") }
-    else { Report('PASS', 'no remote (local-only)') }
+    if ($remote.Count) { Report('PASS', "remote configured: $($remote -join ', ')") }
+    else { Report('PASS', 'no remote (local only)') }
 }
 foreach ($d in 'skills', 'rules', 'agents', 'mcp\servers') {
     if (Test-Path (Join-Path $root $d)) { Report('PASS', "directory: $d") } else { Report('FAIL', "missing directory: $d") }
