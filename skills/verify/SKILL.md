@@ -34,3 +34,6 @@ Verdict: requirement met / partially met / not met
 - Compilation success ≠ verification. Existing tests passing without covering
   the requirement ≠ verification.
 - Report negative results as directly as positive ones.
+- This skill is requirement/behavior verification. `~\.agents\verify.ps1` is
+  infrastructure/layer health verification; running it alone is never
+  evidence that an arbitrary code/task requirement has been satisfied.

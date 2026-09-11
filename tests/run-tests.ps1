@@ -151,6 +151,11 @@ T 'debugging gates present; V2 #1 wording intact' ($tm -match 'systematic-debugg
 $tst = Get-Content (Join-Path $root 'skills\test\SKILL.md') -Raw
 T 'TDD loop in testing rules (intended failure, REFACTOR, escape hatch)' ($tm -match 'fails for the intended reason' -and $tm -match 'REFACTOR' -and $tm -match 'docs-only')
 T 'test skill documents test-first (RED) mode with intended-failure check' ($tst -match 'test-first' -and $tst -match 'fails for the intended reason')
+T 'V2 #4 requirement-coverage gate (criterion mapping + outcome control, no triviality exemption)' ($tm -match 'Requirement-Coverage Gate' -and $tm -match 'UNVERIFIED' -and $tm -match 'PARTIALLY DONE' -and $tm -match 'no triviality')
+T 'V2 #4 verification-configuration weakening protected' ($tm -match 'coverage thresholds' -and $tm -match 'skip markers' -and $tm -match 'verification strength')
+T 'V2 #4 full-suite run required before full completion (test skill)' ($tst -match 'full completion' -and $tst -match 'broader/full test command')
+T 'V2 #4 post-hoc test-linkage cross-reference (test skill)' ($tst -match 'post-hoc' -and $tst -match 'testing\.md')
+
 $snap = @(git -C $root status --porcelain)
 powershell -NoProfile -File (Join-Path $root 'sync-adapters.ps1') | Out-Null
 T 'sync-adapters.ps1 idempotent on real layer' (-not $snap -and -not @(git -C $root status --porcelain))

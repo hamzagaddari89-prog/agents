@@ -25,8 +25,13 @@ Report evidence
 
 1. **Identify.** From the change (git diff/status) or the user request: which
    modules are affected? Which existing tests cover them?
-2. **Run.** Execute the relevant tests first (not the whole suite unless
-   affected). Use the project's actual runner and flags.
+2. **Run.** Execute the relevant tests first as the fast iteration and
+   diagnosis loop (a focused run, not the whole suite). Use the project's
+   actual runner and flags. Focused runs are for iterating, not for
+   claiming completion: before claiming full completion, run the project's
+   broader/full test command when one exists — unless there is a
+   documented, evidence-based reason it is not applicable or cannot be run,
+   and report that limitation honestly.
 3. **Analyze.** For failures: root cause, is it caused by the change, or
    pre-existing? Report pre-existing failures as findings — do not hide them.
    For non-trivial failures, follow the `systematic-debugging` skill before
@@ -60,3 +65,6 @@ The rules below apply unchanged in this mode.
 - Never claim success from compilation or "looks correct".
 - Never skip or ignore a failing test silently.
 - Never weaken an assertion to make it pass.
+- Tests added after the implementation/fix (post-hoc) must demonstrate they
+  exercise the changed behavior — see the post-hoc test-linkage rule in
+  `rules\testing.md`.

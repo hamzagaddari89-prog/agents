@@ -104,6 +104,10 @@ powershell -File ~\.agents\tests\run-integration.ps1    # end-to-end with cleanu
 
 All sync scripts are idempotent and accept `-TargetHome <path>` to run against
 a sandbox (used by tests/doctor; never touches real agent dirs in that mode).
+`verify.ps1` checks layer/infrastructure health only — it is not
+requirement/behavior verification; running it alone never proves an
+arbitrary code/task requirement was satisfied (that is the `verify` skill's
+job).
 
 ## Safety model
 
