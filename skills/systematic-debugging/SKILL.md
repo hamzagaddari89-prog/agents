@@ -29,6 +29,23 @@ Fix causes, not symptoms. Evidence before changes.
    established, say so explicitly and record it (checkpoint Known Issues or
    DECISIONS.md) instead of claiming it fixed.
 
+## Conditional advanced techniques
+
+Use these only when the failure calls for them; ordinary bugs do not require
+extra instrumentation.
+
+- **Backward root-cause tracing.** When the visible failure is far from its
+  origin, trace the bad state or data backward through callers and boundaries
+  until the earliest causal point is identified. Fix that source, not the
+  symptom.
+- **Condition-based waiting.** For asynchronous or timing failures, wait for
+  an observable condition or state transition instead of increasing arbitrary
+  sleeps or delays.
+- **Boundary instrumentation.** For multi-component failures, capture the
+  relevant input and output state at boundaries (for example caller → service,
+  service → API, API → database, process → subprocess, or producer → consumer)
+  to determine exactly where valid state becomes invalid.
+
 ## Rules
 
 - No code changes before the symptom is established and evidence gathered

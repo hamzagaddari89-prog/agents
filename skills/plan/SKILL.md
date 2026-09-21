@@ -23,8 +23,12 @@ Design solution
 Write plan
 ```
 
-1. **Understand.** Restate the goal in one line. Ask the user only if a real
-   blocker is ambiguous — otherwise decide and state the assumption.
+1. **Understand.** Restate the intended outcome in one line. Separate explicit
+   requirements from assumptions. Classify the task as **trivial**, **bounded**,
+   **exploratory**, or **architectural**, and scale planning depth accordingly:
+   trivial needs only a brief check; the others need the inspection and evidence
+   appropriate to their risk. Ask the user only if a real blocker is ambiguous;
+   otherwise decide and state the assumption.
 2. **Inspect.** Read the code the change will touch: entry points, callers,
    conventions, existing tests. Look for existing mechanisms to reuse.
 3. **Constraints.** Stack, framework versions, project rules, things that must
@@ -39,6 +43,16 @@ Write plan
    - Test strategy (what evidence proves it works)
    - Risks and rollbacks
    - Explicitly out of scope
+
+## Pre-execution self-review
+
+Before implementation, check briefly:
+
+- Every explicit requirement maps to an implementation step.
+- No unresolved placeholders remain.
+- Relevant files and responsibilities are identified.
+- Each non-trivial step has an independent verification path.
+- Known gaps and uncertainties are explicit; identify review focus when risk warrants it.
 
 ## Rules
 

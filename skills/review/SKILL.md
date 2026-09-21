@@ -25,6 +25,19 @@ Independent review of a specific implementation/change.
 5. **Complexity.** Over-engineering: unnecessary abstraction, speculative
    config, duplicate mechanisms. Flag with a shrink/simplify direction.
 
+## Evaluate review feedback
+
+When receiving findings from another reviewer, do not accept them blindly:
+
+1. Restate each finding as a concrete technical claim.
+2. Check that claim against the actual code, requirements, callers, and tests.
+3. Clarify ambiguous feedback before implementing it.
+4. Process independent items separately where practical and test each accepted fix.
+5. Reject or push back with evidence when a suggestion is incorrect, unnecessary,
+   breaks compatibility, or violates YAGNI.
+
+Do not use performative agreement as a substitute for verification.
+
 ## Report
 
 Findings ranked by severity, each with:
