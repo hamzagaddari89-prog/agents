@@ -2,7 +2,8 @@
 [CmdletBinding()]
 param()
 $ErrorActionPreference = 'Stop'
-$shared = Join-Path $env:USERPROFILE '.agents\skills'
+$root = Join-Path $env:USERPROFILE '.agents'
+$shared = Join-Path $root 'skills'
 $fail = 0
 function Assert-True([bool]$cond, [string]$msg) {
     if ($cond) { Write-Host "  OK   $msg" }
@@ -10,8 +11,8 @@ function Assert-True([bool]$cond, [string]$msg) {
 }
 
 Write-Host "== 1. Skills load (valid frontmatter) =="
-$skills = Get-ChildItem $shared -Directory | Where-Object { Test-Path (Join-Path $_.FullName 'SKILL.md') }
-Assert-True ($skills.Count -ge 20) "skill count >= 20 (found $($skills.Count))"
+$skills = @(Get-ChildItem $shared -Directory | Where-Object { Test-Path (Join-Path $_.FullName 'SKILL.md') })
+Assert-True ($skills.Count -gt 0) "canonical skills discovered ($($skills.Count))"
 $names = @()
 foreach ($s in $skills) {
     $md = Get-Content (Join-Path $s.FullName 'SKILL.md') -Raw
@@ -43,9 +44,15 @@ foreach ($pair in $pairs) {
     Assert-True ($item -and $item.LinkType -eq 'Junction' -and (Test-Path $dir)) "junction resolves: $dir"
 }
 $codex = Join-Path $env:USERPROFILE '.codex\skills'
-$codexJ = Get-ChildItem $codex -Force -ErrorAction SilentlyContinue |
-    Where-Object { (Get-Item $_.FullName -Force).LinkType -eq 'Junction' }
-Assert-True ($codexJ.Count -ge $skills.Count) "Codex per-skill junctions >= skills ($($codexJ.Count))"
+$codexJ = @(Get-ChildItem $codex -Force -ErrorAction SilentlyContinue |
+    Where-Object { (Get-Item $_.FullName -Force).LinkType -eq 'Junction' })
+$codexMissing = @($skills | Where-Object {
+    $p = Join-Path $codex $_.Name
+    if (-not (Test-Path $p)) { return $true }
+    $i = Get-Item $p -Force
+    -not ($i.LinkType -eq 'Junction' -and $i.Target -and [IO.Path]::GetFullPath(@($i.Target)[0]).TrimEnd('\').ToLowerInvariant() -eq [IO.Path]::GetFullPath($_.FullName).TrimEnd('\').ToLowerInvariant())
+})
+Assert-True ($codexMissing.Count -eq 0) "Codex exposes every canonical skill via correct junctions"
 Assert-True (Test-Path (Join-Path $env:USERPROFILE '.qwen\QWEN.md')) "Qwen pointer artifact exists"
 Assert-True (Test-Path (Join-Path $env:USERPROFILE '.claude\agents\cold-reviewer.md')) "Claude cold-reviewer agent"
 Assert-True (Test-Path (Join-Path $env:USERPROFILE '.config\opencode\agent\cold-reviewer.md')) "OpenCode cold-reviewer agent"

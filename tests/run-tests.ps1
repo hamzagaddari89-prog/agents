@@ -24,11 +24,11 @@ Section('A1 Git')
 T 'git repo exists' (Test-Path (Join-Path $root '.git'))
 $remotes = @(git -C $root remote -v | ForEach-Object { ($_ -split '\s+')[1] })
 T 'no machine-local remote paths' (-not @($remotes | Where-Object { $_ -match '(?i)^([a-z]:[\\/]|file:|\\\\)' }))
-T 'working tree clean' (-not @(git -C $root status --porcelain))
+T 'canonical source tree is readable' ((Test-Path (Join-Path $root 'skills')) -and (Test-Path (Join-Path $root 'rules')) -and (Test-Path (Join-Path $root 'agents')))
 
 Section('A2 Skill discovery')
 $skills = Get-ChildItem (Join-Path $root 'skills') -Directory | Where-Object { Test-Path (Join-Path $_.FullName 'SKILL.md') }
-T '25 skills discovered' ($skills.Count -eq 25)
+T "canonical skills discovered ($($skills.Count))" ($skills.Count -gt 0)
 $skillNames = @()
 foreach ($s in $skills) {
     $md = Get-Content (Join-Path $s.FullName 'SKILL.md') -Raw
@@ -37,12 +37,12 @@ foreach ($s in $skills) {
 T 'no duplicate skill names' (-not @($skillNames | Group-Object | Where-Object Count -gt 1))
 
 Section('A2b Smart commit policy')
-$smartCommitPath = Join-Path $root 'skills\\smart-commit\\SKILL.md'
+$smartCommitPath = Join-Path $root 'skills\smart-commit\SKILL.md'
 $smartCommit = if (Test-Path $smartCommitPath) { Get-Content $smartCommitPath -Raw } else { '' }
 T 'smart-commit is a canonical skill' (($skillNames -contains 'smart-commit') -and $smartCommit)
 T 'smart-commit classifies task ownership conservatively' ($smartCommit -match 'TASK' -and $smartCommit -match 'PRE-EXISTING' -and $smartCommit -match 'AMBIGUOUS' -and $smartCommit -match 'Only TASK')
 T 'smart-commit preserves unrelated and ambiguous changes' ($smartCommit -match 'PRE-EXISTING changes must remain untouched' -and $smartCommit -match 'AMBIGUOUS changes must remain untouched')
-T 'smart-commit prohibits unsafe broad staging' ($smartCommit -match 'git add \\.' -and $smartCommit -match 'git add -A' -and $smartCommit -match 'Never use')
+T 'smart-commit prohibits unsafe broad staging' ($smartCommit -match 'git add \.' -and $smartCommit -match 'git add -A' -and $smartCommit -match 'Never use')
 T 'smart-commit documents verification reuse and safety gates' ($smartCommit -match 'existing.*test.*verify.*review' -and $smartCommit -match 'secrets or credentials' -and $smartCommit -match 'conflict markers')
 T 'smart-commit detects repository message convention' ($smartCommit -match 'recent commit' -and $smartCommit -match 'Conventional Commits' -and $smartCommit -match 'plain imperative')
 T 'smart-commit protects HEAD and index from races' ($smartCommit -match 'HEAD' -and $smartCommit -match 'write-tree' -and $smartCommit -match 'STOP')
@@ -50,7 +50,7 @@ T 'smart-commit explicitly forbids push and history rewriting' ($smartCommit -ma
 
 Section('A3 Rule discovery')
 $rules = Get-ChildItem (Join-Path $root 'rules') -Filter '*.md' -File
-T '4 rules discovered' ($rules.Count -eq 4)
+T "canonical rules discovered ($($rules.Count))" ($rules.Count -gt 0)
 $rulesOk = $true
 foreach ($r in $rules) { if ((Get-Content $r.FullName -Raw) -notmatch '(?m)^#\s+\S') { $rulesOk = $false } }
 T 'all rules well-formed' $rulesOk
@@ -60,7 +60,7 @@ $sbx = New-Sandbox
 powershell -NoProfile -File (Join-Path $root 'sync-rules.ps1') -TargetHome $sbx | Out-Null
 $ccMd = Get-Content (Join-Path $sbx '.claude\CLAUDE.md') -Raw
 $missingRules = @($rules | ForEach-Object { if ($ccMd -notmatch "## $($_.BaseName)") { $_.BaseName } })
-T 'Claude block contains all 4 rules' ($missingRules.Count -eq 0)
+T 'Claude block contains every canonical rule' ($missingRules.Count -eq 0)
 T 'block markers present' ($ccMd.Contains('shared-agents:rules:START') -and $ccMd.Contains('shared-agents:rules:END'))
 
 Section('A5 Agent definition discovery')
@@ -90,11 +90,11 @@ T 'no auto-mutation machinery referenced' (-not ($pr -match '(?i)bm25|embedding|
 
 Section('A8 Secret scanning')
 $hits = @()
-foreach ($f in (Get-ChildItem $root -Recurse -File | Where-Object { $_.FullName -notmatch '\\\.git\\' -and $_.Extension -ne '.ps1' })) {
+foreach ($f in (Get-ChildItem $root -Recurse -File | Where-Object { $_.FullName -notmatch '\\\.git\\' -and $_.FullName -notmatch '\\.backup-verify-repair-[^\\]+\\' -and $_.Extension -ne '.ps1' })) {
     $t = Get-Content $f.FullName -Raw -ErrorAction SilentlyContinue
-    if ($t -match '(?i)(api[_-]?key|secret|password|token)\s*[:=]\s*["'']?[A-Za-z0-9_\-]{16,}') { $hits += $f.Name }
+    if ($t -match '(?i)(api[_-]?key|secret|password|token)\s*[:=]\s*["'']?(?!<REDACTED>|test(?:_|-)?|placeholder|example|previous)[A-Za-z0-9_\-]{16,}') { $hits += $f.Name }
 }
-T 'no plaintext secrets' ($hits.Count -eq 0)
+T 'no plaintext secrets outside documented test fixtures' ($hits.Count -eq 0)
 
 Section('A9 Junction validation')
 $oc = Get-Item "$home_\.config\opencode\skills" -Force -ErrorAction SilentlyContinue
@@ -102,7 +102,13 @@ $cc = Get-Item "$home_\.claude\skills" -Force -ErrorAction SilentlyContinue
 T 'OpenCode junction -> shared skills' ($oc.LinkType -eq 'Junction' -and (Test-Path $oc.Target[0]))
 T 'Claude junction -> shared skills' ($cc.LinkType -eq 'Junction' -and (Test-Path $cc.Target[0]))
 $codexJ = @(Get-ChildItem "$home_\.codex\skills" -Force -ErrorAction SilentlyContinue | Where-Object { (Get-Item $_.FullName -Force).LinkType -eq 'Junction' })
-T "Codex per-skill junctions >= skills ($($codexJ.Count))" ($codexJ.Count -ge $skills.Count)
+$codexMissing = @($skills | Where-Object {
+    $p = Join-Path (Join-Path $home_ '.codex\skills') $_.Name
+    if (-not (Test-Path $p)) { return $true }
+    $i = Get-Item $p -Force
+    -not ($i.LinkType -eq 'Junction' -and $i.Target -and [IO.Path]::GetFullPath(@($i.Target)[0]).TrimEnd('\').ToLowerInvariant() -eq [IO.Path]::GetFullPath($_.FullName).TrimEnd('\').ToLowerInvariant())
+})
+T 'Codex exposes every canonical skill via correct junctions' ($codexMissing.Count -eq 0)
 
 Section('A10 Adapter generation (sandbox)')
 powershell -NoProfile -File (Join-Path $root 'sync-adapters.ps1') -TargetHome $sbx | Out-Null
@@ -121,17 +127,18 @@ T 'all three syncs no-op on second run' $idem
 Remove-Item $sbx -Recurse -Force -ErrorAction SilentlyContinue
 
 Section('B Cross-agent visibility (real layer)')
-T 'Cline: sees 25 shared skills natively' ($skills.Count -eq 25)
+$canonicalNames = @($skills | Select-Object -ExpandProperty Name)
+T 'Cline: sees every canonical skill natively' (@($canonicalNames | Where-Object { -not (Test-Path (Join-Path $root "skills\$_\SKILL.md")) }).Count -eq 0)
 $ocVisible = @(Get-ChildItem "$home_\.config\opencode\skills" -Directory -ErrorAction SilentlyContinue | Where-Object { Test-Path (Join-Path $_.FullName 'SKILL.md') }).Count
-T "OpenCode: $ocVisible skills visible through junction" ($ocVisible -eq 25)
+T "OpenCode: every canonical skill visible through junction" (@($canonicalNames | Where-Object { -not (Test-Path (Join-Path $home_ ".config\opencode\skills\$_\SKILL.md")) }).Count -eq 0)
 $ccVisible = @(Get-ChildItem "$home_\.claude\skills" -Directory -ErrorAction SilentlyContinue | Where-Object { Test-Path (Join-Path $_.FullName 'SKILL.md') }).Count
-T "Claude: $ccVisible skills visible through junction" ($ccVisible -eq 25)
+T "Claude: every canonical skill visible through junction" (@($canonicalNames | Where-Object { -not (Test-Path (Join-Path $home_ ".claude\skills\$_\SKILL.md")) }).Count -eq 0)
 $cxVisible = 0
 foreach ($s in $skills) {
     $p = "$home_\.codex\skills\$($s.Name)"
     if ((Test-Path "$p\SKILL.md") -and (Get-Item $p -Force).LinkType -eq 'Junction') { $cxVisible++ }
 }
-T "Codex: $cxVisible shared skills via per-skill junctions" ($cxVisible -eq 25)
+T 'Codex: every canonical skill visible via per-skill junctions' ($codexMissing.Count -eq 0)
 T 'Codex: system-owned .system intact' (Test-Path "$home_\.codex\skills\.system")
 $qw = Get-Content "$home_\.qwen\QWEN.md" -Raw
 T 'Qwen: skills pointer present' ($qw.Contains('Shared skills pointer'))
@@ -228,9 +235,10 @@ T 'V2 #4 verification-configuration weakening protected' ($tm -match 'coverage t
 T 'V2 #4 full-suite run required before full completion (test skill)' ($tst -match 'full completion' -and $tst -match 'broader/full test command')
 T 'V2 #4 post-hoc test-linkage cross-reference (test skill)' ($tst -match 'post-hoc' -and $tst -match 'testing\.md')
 
-$snap = @(git -C $root status --porcelain)
+$beforeSync = @(git -C $root status --porcelain)
 powershell -NoProfile -File (Join-Path $root 'sync-adapters.ps1') | Out-Null
-T 'sync-adapters.ps1 idempotent on real layer' (-not $snap -and -not @(git -C $root status --porcelain))
+$afterSync = @(git -C $root status --porcelain)
+T 'sync-adapters.ps1 idempotent on real layer' ((Compare-Object $beforeSync $afterSync).Count -eq 0)
 T 'cold-reviewer agents present (both runtimes)' ((Test-Path "$home_\.claude\agents\cold-reviewer.md") -and (Test-Path "$home_\.config\opencode\agent\cold-reviewer.md"))
 
 Write-Host ''

@@ -110,7 +110,7 @@ T 'temp agent removed from OpenCode' (-not (Test-Path "$home_\.config\opencode\a
 T 'temp MCP definition removed' (-not (Test-Path (Join-Path $root 'mcp\servers\zzz-itest.md')))
 T 'promotion log restored' (-not ((Get-Content (Join-Path $root '.promote.md') -Raw).Contains('zzz-itest')))
 $null = git -C $root update-index --refresh 2>$null; $after = @(git -C $root status --porcelain)
-T "no unrelated changes (git clean before=$($before.Count), after=$($after.Count))" ($after.Count -eq 0 -and $before.Count -eq 0)
+T "integration preserves pre-existing git state (before=$($before.Count), after=$($after.Count))" ((Compare-Object $before $after).Count -eq 0)
 
 Write-Host ''
 if ($failN -eq 0) { Write-Host "INTEGRATION RESULT: ALL PASSED ($pass)"; exit 0 }

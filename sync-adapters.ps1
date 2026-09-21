@@ -23,6 +23,14 @@ function Remove-Junction([string]$path) {
     if (Test-Path $path) { throw "Failed to remove junction: $path" }
 }
 
+function Test-SameTree([string]$a, [string]$b) {
+    $left = @{}; $right = @{}
+    Get-ChildItem $a -Recurse -File | ForEach-Object { $left[$_.FullName.Substring($a.Length + 1)] = (Get-FileHash $_.FullName -Algorithm SHA256).Hash }
+    Get-ChildItem $b -Recurse -File | ForEach-Object { $right[$_.FullName.Substring($b.Length + 1)] = (Get-FileHash $_.FullName -Algorithm SHA256).Hash }
+    $keys = @($left.Keys + $right.Keys | Sort-Object -Unique)
+    return (@($keys | Where-Object { $left[$_] -ne $right[$_] }).Count -eq 0)
+}
+
 function New-Junction([string]$path, [string]$target) {
     if (Test-Path $path) {
         $item = Get-Item $path -Force
@@ -50,17 +58,19 @@ $codexSkills = Join-Path $TargetHome '.codex\skills'
 if (-not (Test-Path $codexSkills)) { New-Item -ItemType Directory -Path $codexSkills | Out-Null }
 foreach ($name in $skillNames) {
     $p = Join-Path $codexSkills $name
+    $target = Join-Path $shared $name
     if (Test-Path $p) {
         $item = Get-Item $p -Force
         if ($item.LinkType -ne 'Junction') {
-            Write-Warning "Skipping Codex skill '$name' - a real item already exists: $p"
-            continue
-        }
-        if (-not (Test-SamePath @($item.Target)[0] (Join-Path $shared $name))) {
-            Remove-Junction $p # stale junction -> recreate
+            if (-not (Test-SameTree $p $target)) {
+                throw "Refusing to replace divergent Codex skill directory: $p"
+            }
+            Remove-Item $p -Recurse -Force
+        } elseif (-not (Test-SamePath @($item.Target)[0] $target)) {
+            Remove-Junction $p
         }
     }
-    $report[$p] = New-Junction $p (Join-Path $shared $name)
+    $report[$p] = New-Junction $p $target
 }
 # Remove Codex junctions pointing at shared but whose skill no longer exists
 foreach ($child in Get-ChildItem $codexSkills -Force) {

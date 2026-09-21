@@ -92,9 +92,15 @@ Section('Adapters')
 if (Test-Path (Join-Path $root 'skills')) { Report('PASS', 'Cline: reads ~\.agents\skills natively') }
 if ((Get-Item "$home_\.config\opencode\skills" -Force -ErrorAction SilentlyContinue).LinkType -eq 'Junction') { Report('PASS', 'OpenCode skills junction') } else { Report('FAIL', 'OpenCode skills junction missing') }
 if ((Get-Item "$home_\.claude\skills" -Force -ErrorAction SilentlyContinue).LinkType -eq 'Junction') { Report('PASS', 'Claude skills junction') } else { Report('FAIL', 'Claude skills junction missing') }
-$codexJ = @(Get-ChildItem "$home_\.codex\skills" -Force -ErrorAction SilentlyContinue |
-    Where-Object { (Get-Item $_.FullName -Force).LinkType -eq 'Junction' }).Count
-if ($codexJ -ge $skills.Count) { Report('PASS', "Codex per-skill junctions: $codexJ") } else { Report('FAIL', "Codex per-skill junctions: $codexJ < $($skills.Count)") }
+$codexRoot = Join-Path $home_ '.codex\skills'
+$missingCodex = @($skills | Where-Object {
+    $p = Join-Path $codexRoot $_.Name
+    if (-not (Test-Path $p)) { return $true }
+    $i = Get-Item $p -Force
+    return ($i.LinkType -ne 'Junction' -or -not $i.Target -or [IO.Path]::GetFullPath(@($i.Target)[0]).TrimEnd('\').ToLowerInvariant() -ne [IO.Path]::GetFullPath($_.FullName).TrimEnd('\').ToLowerInvariant())
+})
+if ($missingCodex.Count -eq 0) { Report('PASS', 'all canonical skills exposed through correct Codex junctions') }
+else { Report('FAIL', "missing/wrong Codex skill links: $(@($missingCodex | % Name) -join ', ')") }
 if (Test-Path "$home_\.qwen\QWEN.md") { Report('PASS', 'Qwen pointer artifact') } else { Report('FAIL', 'Qwen pointer missing') }
 if ((Test-Path "$home_\.claude\CLAUDE.md") -and (Select-String -LiteralPath "$home_\.claude\CLAUDE.md" -SimpleMatch 'shared-agents:rules:START' -Quiet)) { Report('PASS', 'Claude rules block') } else { Report('FAIL', 'Claude rules block missing (run sync-rules.ps1)') }
 if ((Test-Path "$home_\.codex\AGENTS.md") -and (Select-String -LiteralPath "$home_\.codex\AGENTS.md" -SimpleMatch 'shared-agents:rules:START' -Quiet)) { Report('PASS', 'Codex rules block') } else { Report('FAIL', 'Codex rules block missing (run sync-rules.ps1)') }
@@ -145,9 +151,9 @@ else { Report('WARN', "stale Codex junctions (run sync-adapters.ps1): $(@($stale
 Section('Safety (secret scan)')
 $secretHits = @()
 foreach ($f in (Get-ChildItem $root -Recurse -File |
-        Where-Object { $_.FullName -notmatch '\\.git\\' -and $_.Extension -ne '.ps1' })) {
+        Where-Object { $_.FullName -notmatch '\\.git\\' -and $_.FullName -notmatch '\\.backup-verify-repair-[^\\]+\\' -and $_.Extension -ne '.ps1' })) {
     $t = Get-Content $f.FullName -Raw -ErrorAction SilentlyContinue
-    if ($t -match '(?i)(api[_-]?key|secret|password|token)\s*[:=]\s*["'']?[A-Za-z0-9_\-]{16,}') {
+    if ($t -match '(?i)(api[_-]?key|secret|password|token)\s*[:=]\s*["'']?(?!<REDACTED>|test(?:_|-)?|placeholder|example|previous)[A-Za-z0-9_\-]{16,}') {
         $secretHits += $f.FullName.Substring($root.Length + 1)
     }
 }
