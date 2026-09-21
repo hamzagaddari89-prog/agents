@@ -36,6 +36,18 @@ foreach ($s in $skills) {
 }
 T 'no duplicate skill names' (-not @($skillNames | Group-Object | Where-Object Count -gt 1))
 
+Section('A2b Smart commit policy')
+$smartCommitPath = Join-Path $root 'skills\\smart-commit\\SKILL.md'
+$smartCommit = if (Test-Path $smartCommitPath) { Get-Content $smartCommitPath -Raw } else { '' }
+T 'smart-commit is a canonical skill' (($skillNames -contains 'smart-commit') -and $smartCommit)
+T 'smart-commit classifies task ownership conservatively' ($smartCommit -match 'TASK' -and $smartCommit -match 'PRE-EXISTING' -and $smartCommit -match 'AMBIGUOUS' -and $smartCommit -match 'Only TASK')
+T 'smart-commit preserves unrelated and ambiguous changes' ($smartCommit -match 'PRE-EXISTING changes must remain untouched' -and $smartCommit -match 'AMBIGUOUS changes must remain untouched')
+T 'smart-commit prohibits unsafe broad staging' ($smartCommit -match 'git add \\.' -and $smartCommit -match 'git add -A' -and $smartCommit -match 'Never use')
+T 'smart-commit documents verification reuse and safety gates' ($smartCommit -match 'existing.*test.*verify.*review' -and $smartCommit -match 'secrets or credentials' -and $smartCommit -match 'conflict markers')
+T 'smart-commit detects repository message convention' ($smartCommit -match 'recent commit' -and $smartCommit -match 'Conventional Commits' -and $smartCommit -match 'plain imperative')
+T 'smart-commit protects HEAD and index from races' ($smartCommit -match 'HEAD' -and $smartCommit -match 'write-tree' -and $smartCommit -match 'STOP')
+T 'smart-commit explicitly forbids push and history rewriting' ($smartCommit -match 'NO automatic push' -and $smartCommit -match 'force push' -and $smartCommit -match 'history rewriting')
+
 Section('A3 Rule discovery')
 $rules = Get-ChildItem (Join-Path $root 'rules') -Filter '*.md' -File
 T '4 rules discovered' ($rules.Count -eq 4)
